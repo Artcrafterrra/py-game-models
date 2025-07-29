@@ -1,44 +1,53 @@
-import init_django_orm  # noqa: F401
 import json
+
+import init_django_orm  # noqa: F401
 
 from db.models import Race, Skill, Player, Guild
 
 
 def main() -> None:
-    with open("players.json", "r") as file:
-        players_data = json.load(file)
+    with open("players.json", "r") as json_file:
+        players_info = json.load(json_file)
 
-    for player_data in players_data:
-        race_data = player_data["race"]
+    for name, player_data in players_info.items():
+        race_info = player_data.get("race")
+
         race, _ = Race.objects.get_or_create(
-            name=race_data["name"],
-            defaults={"description": race_data.get("description", "")}
+            name=race_info.get("name"),
+            defaults={
+                "description": race_info.get("description")
+            }
         )
-
-        for skill_data in race_data.get("skills", []):
+        for skill in race_info.get("skills"):
             Skill.objects.get_or_create(
-                name=skill_data["name"],
+                name=skill.get("name"),
                 race=race,
-                defaults={"bonus": skill_data["bonus"]}
+                defaults={
+                    "bonus": skill.get("bonus")
+                }
             )
 
+        guild_info = player_data.get("guild")
         guild = None
-        if player_data.get("guild"):
-            guild_data = player_data["guild"]
+
+        if guild_info:
             guild, _ = Guild.objects.get_or_create(
-                name=guild_data["name"],
-                defaults={"description": guild_data.get("description")}
+                name=guild_info.get("name"),
+                defaults={
+                    "description": guild_info.get("description")
+                }
             )
 
         Player.objects.get_or_create(
-            nickname=player_data["nickname"],
+            nickname=name,
             defaults={
-                "email": player_data["email"],
-                "bio": player_data["bio"],
+                "email": player_data.get("email"),
+                "bio": player_data.get("bio"),
                 "race": race,
-                "guild": guild,
+                "guild": guild
             }
         )
+
 
 
 if __name__ == "__main__":
